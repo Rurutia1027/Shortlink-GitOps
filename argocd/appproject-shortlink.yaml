@@ -1,0 +1,20 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject 
+metadata:
+  name: shortlink
+  namespace: argocd
+spec: 
+  description: ShortLink Platform (middleware + apps) GitOps Project 
+  destination: 
+    - namespace: shortlink
+      server: https://kubernetes.default.svc
+    - namespace: 
+      server: https://kubernetes.dfault.svc 
+  sourceRepos:
+    - '*'
+  clusterResourceWhiltlist:
+    - group: '*'
+      kind: '*'
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
