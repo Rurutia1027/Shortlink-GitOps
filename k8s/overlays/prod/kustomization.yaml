@@ -8,6 +8,7 @@ resources:
   - ../../base/postgres/
   - ../../base/redis/
   - ../../base/kafka/
+  - clickhouse/
   - ../../istio/
   - shortlink/
   - admin/
