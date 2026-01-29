@@ -26,3 +26,5 @@ This folder is the **GitOps / ArgoCD repository** for the ShortLink platform.
 export GIT_REPO_URL=https://github.com/Rurutia1027/Shortlink-GitOps.git
 ./bin/argocd-register-prod.sh
 ```
+
+![ArgoCD](./docs/argocd-diagram.png)
