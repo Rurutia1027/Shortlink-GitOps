@@ -1,4 +1,4 @@
-## shortlink-gitops
+## Shortlink GitOps
 
 This folder is the **GitOps / ArgoCD repository** for the ShortLink platform.
 
