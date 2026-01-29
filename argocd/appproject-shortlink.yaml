@@ -1,20 +1,20 @@
 apiVersion: argoproj.io/v1alpha1
-kind: AppProject 
+kind: Application
 metadata:
-  name: shortlink
+  name: shortlink-prod
   namespace: argocd
-spec: 
-  description: ShortLink Platform (middleware + apps) GitOps Project 
-  destination: 
-    - namespace: shortlink
-      server: https://kubernetes.default.svc
-    - namespace: 
-      server: https://kubernetes.dfault.svc 
-  sourceRepos:
-    - '*'
-  clusterResourceWhiltlist:
-    - group: '*'
-      kind: '*'
-  namespaceResourceWhitelist:
-    - group: '*'
-      kind: '*'
+spec:
+  project: shortlink
+  source:
+    repoURL: https://github.com/Rurutia1027/Shortlink-GitOps.git
+    targetRevision: HEAD
+    path: k8s/overlays/prod
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: shortlink
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
