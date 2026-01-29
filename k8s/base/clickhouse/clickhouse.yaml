@@ -166,6 +166,10 @@ spec:
       labels:
         app: clickhouse
     spec:
+      volumes:
+        - name: clickhouse-config
+          configMap:
+            name: clickhouse-config
       containers:
         - name: clickhouse-server
           image: clickhouse/clickhouse-server:23.12-alpine

@@ -7,3 +7,8 @@ resources:
   - shortlink-deployment.yaml
   - shortlink-service.yaml
 
+patches:
+  - path: sync-wave-patch.yaml
+    target:
+      kind: Deployment
+      name: shortlink

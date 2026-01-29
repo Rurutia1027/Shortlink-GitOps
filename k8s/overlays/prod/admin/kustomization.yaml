@@ -7,3 +7,8 @@ resources:
   - admin-deployment.yaml
   - admin-service.yaml
 
+patches:
+  - path: sync-wave-patch.yaml
+    target:
+      kind: Deployment
+      name: admin

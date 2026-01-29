@@ -5,7 +5,11 @@ namespace: shortlink
 
 resources:
   - ../../../base/clickhouse/
+  - clickhouse-prod-extra.yaml
 
 # Prod environment: larger resources, optimized for production
-patchesStrategicMerge:
-  - clickhouse-prod-patch.yaml
+patches:
+  - path: clickhouse-prod-patch.yaml
+    target:
+      kind: StatefulSet
+      name: clickhouse

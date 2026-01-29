@@ -9,6 +9,17 @@ spec:
     spec:
       containers:
         - name: clickhouse-server
+          volumeMounts:
+            - name: clickhouse-data
+              mountPath: /var/lib/clickhouse
+            - name: clickhouse-config
+              mountPath: /etc/clickhouse-server/config.d/config.xml
+              subPath: config.xml
+            - name: clickhouse-config
+              mountPath: /etc/clickhouse-server/users.d/users.xml
+              subPath: users.xml
+            - name: clickhouse-logs
+              mountPath: /var/log/clickhouse-server
           resources:
             requests:
               memory: "2Gi"      # Dev: smaller memory
@@ -20,12 +31,14 @@ spec:
     - metadata:
         name: clickhouse-data
       spec:
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: 50Gi        # Dev: smaller storage
     - metadata:
         name: clickhouse-logs
       spec:
+        accessModes: ["ReadWriteOnce"]
         resources:
           requests:
             storage: 10Gi        # Dev: smaller logs storage
