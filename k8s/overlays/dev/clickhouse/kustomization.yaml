@@ -3,9 +3,12 @@ kind: Kustomization
 
 namespace: shortlink
 
-resources: 
-  - ../../../base/clickhouse
+resources:
+  - ../../../base/clickhouse/
 
-# Dev environment: smaller resources, single replica 
-patchesStrategicMerge:
-  - clickhouse-dev-patch.yaml 
+# Dev environment: smaller resources, single replica
+patches:
+  - path: clickhouse-dev-patch.yaml
+    target:
+      kind: StatefulSet
+      name: clickhouse

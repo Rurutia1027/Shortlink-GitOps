@@ -1,0 +1,37 @@
+# Production-only resources: NetworkPolicy and Secret.
+# Include this file only in prod overlay.
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: clickhouse-netpol
+  namespace: shortlink
+spec:
+  podSelector:
+    matchLabels:
+      app: clickhouse
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: shortlink
+      ports:
+        - protocol: TCP
+          port: 8123  # HTTP
+        - protocol: TCP
+          port: 9000  # Native
+
+---
+# Secret for ClickHouse password. Create separately in production via:
+#   kubectl create secret generic clickhouse-secret --from-literal=password='xxx' -n shortlink
+#   or Vault/Sealed Secrets/External Secrets Operator.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: clickhouse-secret
+  namespace: shortlink
+type: Opaque
+stringData:
+  password: ""  # Should be managed via external secret management tool
