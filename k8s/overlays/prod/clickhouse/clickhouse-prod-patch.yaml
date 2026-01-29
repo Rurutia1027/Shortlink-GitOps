@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse
+  namespace: shortlink
+spec:
+  replicas: 1  # Can be increased to 3+ for HA with ReplicatedMergeTree
+  template:
+    spec:
+      containers:
+        - name: clickhouse-server
+          resources:
+            requests:
+              memory: "8Gi"      # Prod: larger memory
+              cpu: "4000m"       # Prod: 4 CPU
+            limits:
+              memory: "16Gi"     # Prod: larger limit
+              cpu: "8000m"       # Prod: 8 CPU
+          env:
+            # Prod: use secrets for passwords (should be configured via Secret)
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clickhouse-secret
+                  key: password
+  volumeClaimTemplates:
+    - metadata:
+        name: clickhouse-data
+      spec:
+        resources:
+          requests:
+            storage: 200Gi       # Prod: larger storage
+        storageClassName: fast-ssd  # Prod: use faster storage class if available
+    - metadata:
+        name: clickhouse-logs
+      spec:
+        resources:
+          requests:
+            storage: 50Gi        # Prod: larger logs storage
+
+---
+# Production: Add NetworkPolicy for security
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: clickhouse-netpol
+  namespace: shortlink
+spec:
+  podSelector:
+    matchLabels:
+      app: clickhouse
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: shortlink
+      ports:
+        - protocol: TCP
+          port: 8123  # HTTP
+        - protocol: TCP
+          port: 9000  # Native
+
+---
+# Production: Secret for ClickHouse password
+# NOTE: This Secret should be created separately via:
+#   - kubectl create secret generic clickhouse-secret --from-literal=password='xxx' -n shortlink
+#   - Vault/Sealed Secrets/External Secrets Operator
+# The StatefulSet will reference this Secret if it exists.
+# For now, we include a placeholder that should be replaced with actual secret management.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: clickhouse-secret
+  namespace: shortlink
+type: Opaque
+stringData:
+  password: ""  # Should be managed via external secret management tool

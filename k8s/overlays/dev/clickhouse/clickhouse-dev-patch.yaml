@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse
+  namespace: shortlink
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: clickhouse-server
+          resources:
+            requests:
+              memory: "2Gi"      # Dev: smaller memory
+              cpu: "1000m"       # Dev: 1 CPU
+            limits:
+              memory: "4Gi"      # Dev: smaller limit
+              cpu: "2000m"       # Dev: 2 CPU
+  volumeClaimTemplates:
+    - metadata:
+        name: clickhouse-data
+      spec:
+        resources:
+          requests:
+            storage: 50Gi        # Dev: smaller storage
+    - metadata:
+        name: clickhouse-logs
+      spec:
+        resources:
+          requests:
+            storage: 10Gi        # Dev: smaller logs storage
