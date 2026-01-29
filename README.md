@@ -27,4 +27,6 @@ export GIT_REPO_URL=https://github.com/Rurutia1027/Shortlink-GitOps.git
 ./bin/argocd-register-prod.sh
 ```
 
-![ArgoCD](./docs/argocd-diagram.png)
+## Diagrams of ArgoCD UI 
+![Diagram-1](./docs/argocd-diagram-1.png)
+![Diagram-2](./docs/argocd-diagram-2.png)
