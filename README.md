@@ -1,4 +1,4 @@
-## Shortlink GitOps
+## Shortlink GitOps | [![K8s Validate (Kustomize)](https://github.com/Rurutia1027/Shortlink-GitOps/actions/workflows/ci-k8s-validate.yml/badge.svg)](https://github.com/Rurutia1027/Shortlink-GitOps/actions/workflows/ci-k8s-validate.yml)
 
 This folder is the **GitOps / ArgoCD repository** for the ShortLink platform.
 
