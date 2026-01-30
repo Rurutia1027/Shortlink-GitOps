@@ -6,8 +6,8 @@ resources:
   - redis/
   - kafka/
   - clickhouse/
-# Now we manually execute job files when k8s and base services are up
-# More granularity scheduling/orchestration gonna hand over to GitOp/ArgoCD
-#  - flyway-admin-job.yaml
-#  - flyway-shortlink-job.yaml
+  # ArgoCD is ready, and the ArgoCD app listens to this path, 
+  # uncommom jobs, sync from ArgoCD server will automatically trigger the two jobs executions
+  - flyway-admin-job.yaml
+  - flyway-shortlink-job.yaml
 
