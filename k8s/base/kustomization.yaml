@@ -6,8 +6,6 @@ resources:
   - redis/
   - kafka/
   - clickhouse/
-  # ArgoCD is ready, and the ArgoCD app listens to this path, 
-  # uncommom jobs, sync from ArgoCD server will automatically trigger the two jobs executions
-  - flyway-admin-job.yaml
-  - flyway-shortlink-job.yaml
+  # ArgoCD PostSync jobs; sync from ArgoCD server triggers job execution
+  - flyway/
 
