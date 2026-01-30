@@ -1,12 +1,14 @@
+# Argo CD PostSync hook: run DB migrations after Sync (Postgres, etc.) succeeds.
+# sync-wave "1" so this runs after flyway-admin (wave 0).
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: flyway-shortlink
   namespace: shortlink
   annotations:
-  argocd.argoproj.io/sync-wave: "1"
-  argocd.argoproj.io/hook: Sync
-  argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/sync-wave: "1"
 spec:
   backoffLimit: 3
   ttlSecondsAfterFinished: 600   # keep Pod for debugging

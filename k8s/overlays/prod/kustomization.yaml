@@ -12,4 +12,7 @@ resources:
   - ../../istio/
   - shortlink/
   - admin/
+  # PostSync hooks: migrations + Kafka topic (run after Sync; job changes trigger re-sync)
+  - ../../base/flyway-admin-job.yaml
+  - ../../base/flyway-shortlink-job.yaml
 
