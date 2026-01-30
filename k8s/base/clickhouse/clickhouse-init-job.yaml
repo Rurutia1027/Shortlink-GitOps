@@ -1,0 +1,49 @@
+# Argo CD PostSync: create shortlink_stats DB and tables/MVs after ClickHouse is deployed.
+# Order: Sync (ClickHouse StatefulSet) → PostSync this Job. Idempotent (CREATE IF NOT EXISTS).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: clickhouse-init
+  namespace: shortlink
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/sync-wave: "2"   # after Flyway (0,1) and Kafka topic if any; CK is in Sync
+spec:
+  backoffLimit: 10
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: clickhouse-init
+          image: clickhouse/clickhouse-server:23.12-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+              HOST="${CLICKHOUSE_HOST:-clickhouse.shortlink.svc.cluster.local}"
+              PORT="${CLICKHOUSE_PORT:-9000}"
+              until clickhouse-client --host "$HOST" --port "$PORT" -q "SELECT 1"; do
+                echo "Waiting for ClickHouse at $HOST:$PORT..."
+                sleep 3
+              done
+              echo "Running 01_create_db.sql..."
+              clickhouse-client --host "$HOST" --port "$PORT" --multiquery < /scripts/01_create_db.sql
+              echo "Running 02_tables_mvs.sql..."
+              clickhouse-client --host "$HOST" --port "$PORT" --database shortlink_stats --multiquery < /scripts/02_tables_mvs.sql
+              echo "ClickHouse init done."
+          env:
+            - name: CLICKHOUSE_HOST
+              value: clickhouse.shortlink.svc.cluster.local
+            - name: CLICKHOUSE_PORT
+              value: "9000"
+          volumeMounts:
+            - name: ddl
+              mountPath: /scripts
+              readOnly: true
+      volumes:
+        - name: ddl
+          configMap:
+            name: clickhouse-init-ddl

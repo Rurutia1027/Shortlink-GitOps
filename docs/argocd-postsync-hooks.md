@@ -35,6 +35,7 @@ So: infra and apps are applied in Sync; only when that is healthy do we run Post
 | `flyway-admin` | Admin DB migrations | sync-wave `"0"` (first) |
 | `flyway-shortlink` | Shortlink DB migrations | sync-wave `"1"` (after admin) |
 | `kafka-create-stats-topic` | Create `shortlink-stats-events` topic | (no wave; runs with other PostSync) |
+| `clickhouse-init` | Create `shortlink_stats` DB and tables/MVs | sync-wave `"2"` (after CK deploy in Sync) |
 
 Annotations used:
 
@@ -55,13 +56,24 @@ Our Argo CD **Application** points at:
 So:
 
 - **Any change under `k8s/overlays/prod`** (including the Job manifests referenced there) is part of the desired state Argo CD syncs.
-- **Including the Flyway and Kafka topic Jobs** in the prod overlay (via `../../base/flyway-admin-job.yaml`, `../../base/flyway-shortlink-job.yaml`, and `../../base/kafka/` which contains `kafka-create-topic-job.yaml`) means:
+- **Including the Flyway, Kafka topic, and ClickHouse init Jobs** in the prod overlay (via `../../base/flyway/`, `../../base/kafka/`, and `../../base/clickhouse/`) means:
   - **Job YAML changes trigger a re-sync**: When you push edits to those Job files (image, env, command, annotations, etc.), Argo CD sees a diff and runs a sync.
   - **PostSync runs again**: On sync, Argo CD runs PreSync → Sync → PostSync. The hook Jobs are part of PostSync; Argo CD will create/update them and run them according to hook semantics (e.g. new Job run for that sync).
 
 So: **yes, modifying these Jobs in the repo that backs `k8s/overlays/prod` will trigger re-deployment** in the sense that the next sync will apply the new Job specs and run the PostSync phase (and thus run the Jobs again as per Argo CD’s hook behavior).
 
+## ClickHouse init (DB + tables): ConfigMap + PostSync Job
+
+ClickHouse has no Flyway-equivalent in-app; we mirror the pattern with **ConfigMap + PostSync Job**:
+
+1. **ConfigMap `clickhouse-init-ddl`** holds two SQL scripts:
+   - `01_create_db.sql`: `CREATE DATABASE IF NOT EXISTS shortlink_stats;`
+   - `02_tables_mvs.sql`: all `CREATE TABLE` / `CREATE MATERIALIZED VIEW` for `shortlink_stats` (idempotent with `IF NOT EXISTS`).
+2. **PostSync Job `clickhouse-init`** (sync-wave `"2"`): after ClickHouse StatefulSet is in Sync, the Job waits until CK is reachable, then runs 01 then 02 (with `--database shortlink_stats` for 02). One Job does both “create DB” and “create tables”; no separate init vs migrate Jobs unless you want stricter separation later.
+
+DDL lives in Git (ConfigMap); changes to scripts or Job trigger re-sync and re-run. Same idea as Flyway: infra/schema as code, executed after the service is deployed.
+
 ## Summary
 
-- Use **PostSync** for migrations and Kafka topic creation so they run after Sync and any failure fails the sync.
+- Use **PostSync** for migrations, Kafka topic creation, and ClickHouse init so they run after Sync and any failure fails the sync.
 - **Flyway** and **Kafka create-topic** Jobs are refactored to PostSync and are included in the prod overlay so that changes to those Job manifests are synced by Argo CD and re-running sync will re-run the PostSync phase (and the Jobs).
