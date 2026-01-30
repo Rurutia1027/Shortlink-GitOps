@@ -1,0 +1,30 @@
+# Argo CD PostSync hook: create stats topic after Sync (Kafka) succeeds.
+# Flow: PreSync → Sync (Kafka Deployment) → PostSync (Current Job). Once current Job got failure then the complete deployment come to failure
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kafka-create-stats-topic
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  backoffLimit: 10
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: create-topic
+          image: confluentinc/cp-kafka:7.5.0
+          command:
+            - kafka-topics
+            - --bootstrap-server
+            - kafka.shortlink.svc.cluster.local:9092
+            - --create
+            - --if-not-exists
+            - --topic
+            - shortlink-stats-events
+            - --partitions
+            - "20"
+            - --replication-factor
+            - "1"
