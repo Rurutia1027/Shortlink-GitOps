@@ -39,6 +39,11 @@ spec:
               memory: "4Gi"
               cpu: "2000m"
           env:
+            - name: CLICKHOUSE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: clickhouse-secret
+                  key: username
             - name: CLICKHOUSE_PASSWORD
               valueFrom:
                 secretKeyRef:
