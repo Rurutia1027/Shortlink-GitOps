@@ -1,0 +1,6 @@
+# Relaxed rules: only syntax; style (trailing-spaces, line-length, empty-lines) disabled.
+extends: relaxed
+rules:
+  line-length: disable
+  trailing-spaces: disable
+  empty-lines: disable

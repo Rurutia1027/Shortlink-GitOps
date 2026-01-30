@@ -1,0 +1,38 @@
+# CI: Kustomize build + kubectl apply dry-run. Block merge if apply would fail (e.g. StatefulSet env value+valueFrom).
+name: K8s Validate (Kustomize + dry-run)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'k8s/**'
+      - '.github/workflows/ci-k8s-validate.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'k8s/**'
+      - '.github/workflows/ci-k8s-validate.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: Kustomize build + kubectl apply --dry-run=client
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install kubectl (includes kustomize)
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Kustomize build prod overlay
+        run: |
+          kubectl kustomize k8s/overlays/prod > /tmp/prod-manifests.yaml
+          echo "Prod overlay built OK."
+
+      - name: Validate apply (dry-run, no cluster)
+        run: |
+          kubectl apply -f /tmp/prod-manifests.yaml --dry-run=client --validate=true
+          echo "Apply dry-run OK."
