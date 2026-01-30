@@ -39,6 +39,8 @@ spec:
               memory: "4Gi"
               cpu: "2000m"
           env:
+            - name: CLICKHOUSE_DB
+              value: "default"
             - name: CLICKHOUSE_USER
               valueFrom:
                 secretKeyRef:
@@ -49,4 +51,7 @@ spec:
                 secretKeyRef:
                   name: clickhouse-secret
                   key: password
+            - name: CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT
+              value: "1"
+  # Empty list: prod uses emptyDir (above), not PVCs. If cluster already had PVCs, delete StatefulSet first: kubectl delete sts clickhouse -n shortlink
   volumeClaimTemplates: []
