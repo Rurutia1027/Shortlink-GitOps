@@ -1,0 +1,70 @@
+# Lightweight CI: YAML syntax, Kustomize build, and Kubernetes schema validation.
+# No cluster required. Catches most issues before Argo CD / deploy.
+name: K8s Validate (YAML + Kustomize + dry-run)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'k8s/**'
+      - 'config/**'
+      - '.github/workflows/ci-k8s-validate.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'k8s/**'
+      - 'config/**'
+      - '.github/workflows/ci-k8s-validate.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    name: YAML + Kustomize + K8s schema
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 1. YAML syntax validation
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install yamllint
+        run: pip install yamllint
+
+      - name: YAML syntax (yamllint)
+        run: |
+          yamllint -d relaxed -f colored k8s/
+          [ ! -d config ] || yamllint -d relaxed -f colored config/
+
+      # 2. Kustomize build (overlays must build)
+      - name: Install kubectl (includes kustomize)
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Kustomize build overlays
+        run: |
+          kubectl kustomize k8s/overlays/prod > /tmp/prod-manifests.yaml
+          echo "Prod overlay built successfully."
+          if [ -d k8s/overlays/dev ]; then
+            kubectl kustomize k8s/overlays/dev > /tmp/dev-manifests.yaml
+            echo "Dev overlay built successfully."
+          fi
+
+      # 3. Kubernetes schema validation (dry-run, no cluster)
+      - name: Kubernetes schema (kubectl apply --dry-run=client)
+        run: |
+          kubectl apply -f /tmp/prod-manifests.yaml --dry-run=client --validate=true
+          if [ -f /tmp/dev-manifests.yaml ]; then
+            kubectl apply -f /tmp/dev-manifests.yaml --dry-run=client --validate=true
+          fi
+
+      # 4. Optional: policy / best-practice lint (kube-linter, StackRox)
+      - name: Lint (kube-linter) – optional
+        continue-on-error: true
+        run: |
+          # Use Docker image so we don't depend on a specific binary release URL
+          docker run --rm -v /tmp:/tmp stackrox/kube-linter:0.8.1 lint /tmp/prod-manifests.yaml 2>&1 || true

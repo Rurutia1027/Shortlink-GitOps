@@ -1,0 +1,30 @@
+# Pre-commit: YAML syntax + Kustomize build + kubectl dry-run.
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+repos:
+  # 1. YAML syntax
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [-d, relaxed]
+        files: \.(yaml|yml)$
+        exclude: ^(k8s/|config/).*  # only if you want to limit scope
+  # Scope to k8s and config only (remove exclude above and use this):
+  - repo: local
+    hooks:
+      - id: yamllint-k8s
+        name: yamllint (k8s + config)
+        entry: yamllint -d relaxed
+        language: system
+        files: ^(k8s/|config/).*\.(yaml|yml)$
+
+  # 2. Kustomize build + kubectl dry-run (fail if overlay broken or invalid K8s)
+  - repo: local
+    hooks:
+      - id: kustomize-dry-run
+        name: kustomize build + kubectl apply --dry-run=client
+        entry: bash -c 'kubectl kustomize k8s/overlays/prod | kubectl apply -f - --dry-run=client --validate=true'
+        language: system
+        pass_filenames: false
+        files: ^k8s/
