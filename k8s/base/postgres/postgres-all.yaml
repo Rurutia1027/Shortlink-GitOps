@@ -58,4 +58,3 @@ data:
     -- Create multiple schemas in a single PostgreSQL instance
     CREATE database admin;
     CREATE database shortlink;
-

@@ -145,4 +145,3 @@ spec:
   selector:
     app: kafka
   clusterIP: None
-

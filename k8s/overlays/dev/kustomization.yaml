@@ -9,4 +9,3 @@ resources:
   - ../../base/redis/
   - ../../base/kafka/
   - clickhouse/
-

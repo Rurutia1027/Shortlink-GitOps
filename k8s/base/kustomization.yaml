@@ -8,4 +8,3 @@ resources:
   - clickhouse/
   # ArgoCD PostSync jobs; sync from ArgoCD server triggers job execution
   - flyway/
-

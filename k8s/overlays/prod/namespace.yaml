@@ -4,4 +4,3 @@ metadata:
   name: shortlink
   labels:
     istio-injection: enabled   # enable Istio sidecar injection
-

@@ -25,4 +25,3 @@ spec:
             host: shortlink.shortlink.svc.cluster.local
             port:
               number: 8081 # this port should be the port declared in the associated service
-
