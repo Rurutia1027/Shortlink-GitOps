@@ -3,3 +3,6 @@ kind: Kustomization
 
 resources:
   - clickhouse.yaml
+  # PostSync: DDL in ConfigMap, Job runs after CK deploy (create DB + tables/MVs)
+  - clickhouse-init-cm.yaml
+  - clickhouse-init-job.yaml
