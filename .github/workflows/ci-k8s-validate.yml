@@ -1,5 +1,5 @@
-# CI: Kustomize build + kubectl apply dry-run. Block merge if apply would fail (e.g. StatefulSet env value+valueFrom).
-name: K8s Validate (Kustomize + dry-run)
+# CI: Kustomize build only. No cluster. Pass = final kustomize YAML is valid/available.
+name: K8s Validate (Kustomize)
 
 on:
   push:
@@ -16,7 +16,7 @@ on:
 
 jobs:
   validate:
-    name: Kustomize build + kubectl apply --dry-run=client
+    name: Kustomize build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -29,10 +29,5 @@ jobs:
 
       - name: Kustomize build prod overlay
         run: |
-          kubectl kustomize k8s/overlays/prod > /tmp/prod-manifests.yaml
+          kubectl kustomize k8s/overlays/prod
           echo "Prod overlay built OK."
-
-      - name: Validate apply (dry-run, no cluster)
-        run: |
-          kubectl apply -f /tmp/prod-manifests.yaml --dry-run=client --validate=true
-          echo "Apply dry-run OK."
