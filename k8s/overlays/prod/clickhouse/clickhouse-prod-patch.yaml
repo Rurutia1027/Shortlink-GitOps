@@ -1,6 +1,7 @@
 # Prod overlay for small/local cluster (1 master + 2 nodes).
 # Uses emptyDir instead of PVCs so no StorageClass or PV provisioning is required.
 # Data and logs are ephemeral (lost on pod restart); suitable for local/dev.
+# Init container writes default-password.xml from Secret so server uses password=default.
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -14,10 +15,33 @@ spec:
         - name: clickhouse-config
           configMap:
             name: clickhouse-config
+        - name: clickhouse-users-d
+          emptyDir: {}
         - name: clickhouse-data
           emptyDir: {}
         - name: clickhouse-logs
           emptyDir: {}
+      initContainers:
+        - name: clickhouse-users-d-init
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              cp /config/users.xml /users.d/users.xml
+              printf '<clickhouse><users><default><password>%s</password></default></users></clickhouse>\n' "$CLICKHOUSE_PASSWORD" > /users.d/default-password.xml
+          env:
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: clickhouse-secret
+                  key: password
+          volumeMounts:
+            - name: clickhouse-config
+              mountPath: /config
+              readOnly: true
+            - name: clickhouse-users-d
+              mountPath: /users.d
       containers:
         - name: clickhouse-server
           volumeMounts:
@@ -26,9 +50,8 @@ spec:
             - name: clickhouse-config
               mountPath: /etc/clickhouse-server/config.d/config.xml
               subPath: config.xml
-            - name: clickhouse-config
-              mountPath: /etc/clickhouse-server/users.d/users.xml
-              subPath: users.xml
+            - name: clickhouse-users-d
+              mountPath: /etc/clickhouse-server/users.d
             - name: clickhouse-logs
               mountPath: /var/log/clickhouse-server
           resources:
