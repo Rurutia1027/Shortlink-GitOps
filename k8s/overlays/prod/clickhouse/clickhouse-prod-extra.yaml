@@ -24,9 +24,7 @@ spec:
           port: 9000  # Native
 
 ---
-# Secret for ClickHouse password. Create separately in production via:
-#   kubectl create secret generic clickhouse-secret --from-literal=password='xxx' -n shortlink
-#   or Vault/Sealed Secrets/External Secrets Operator.
+# Secret for ClickHouse: user=default, password=default. TODO: Move to Vault when ready.
 apiVersion: v1
 kind: Secret
 metadata:
@@ -34,4 +32,5 @@ metadata:
   namespace: shortlink
 type: Opaque
 stringData:
-  password: ""  # Should be managed via external secret management tool
+  username: "default"
+  password: "default"
