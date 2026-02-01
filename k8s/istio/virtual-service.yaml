@@ -9,6 +9,41 @@ spec:
   gateways:
     - shortlink-gateway # cross namespace ${ns}/${gw-name} virtual service bind to gateway is required
   http:
+    # ========== Monitoring UIs ==========
+    # Kafka UI - web-based Kafka monitoring (topics, brokers, consumers, messages)
+    - match:
+        - uri:
+            prefix: /kafka-ui
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: kafka-ui.shortlink.svc.cluster.local
+            port:
+              number: 8080
+    # ClickHouse UI (Tabix) - SQL editor and table browser for ClickHouse
+    - match:
+        - uri:
+            prefix: /clickhouse-ui
+      rewrite:
+        uri: /
+      route:
+        - destination:
+            host: clickhouse-ui.shortlink.svc.cluster.local
+            port:
+              number: 80
+    # ClickHouse Play UI - built-in ClickHouse SQL editor (native)
+    - match:
+        - uri:
+            prefix: /clickhouse-play
+      rewrite:
+        uri: /play
+      route:
+        - destination:
+            host: clickhouse.shortlink.svc.cluster.local
+            port:
+              number: 8123
+    # ========== Application APIs ==========
     - match:
         - uri:
             prefix: /api/shortlink/admin

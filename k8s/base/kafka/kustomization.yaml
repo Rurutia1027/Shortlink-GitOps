@@ -4,4 +4,6 @@ kind: Kustomization
 resources:
   - kafka.yaml
   - kafka-create-topic-job.yaml
+  # Web UI for Kafka monitoring (topics, brokers, consumers, messages)
+  - kafka-ui.yaml
 
