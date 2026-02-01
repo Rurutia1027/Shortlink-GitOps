@@ -6,3 +6,5 @@ resources:
   # PostSync: DDL in ConfigMap, Job runs after CK deploy (create DB + tables/MVs)
   - clickhouse-init-cm.yaml
   - clickhouse-init-job.yaml
+  # Tabix Web UI for ClickHouse (SQL editor, table browser, query history)
+  - clickhouse-ui.yaml
