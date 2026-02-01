@@ -1,7 +1,7 @@
 # Prod overlay for small/local cluster (1 master + 2 nodes).
 # Uses emptyDir instead of PVCs so no StorageClass or PV provisioning is required.
 # Data and logs are ephemeral (lost on pod restart); suitable for local/dev.
-# Init container writes default-password.xml from Secret so server uses password=default.
+# Init container writes users.xml and default-password.xml with no_password (simplest auth).
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -28,14 +28,10 @@ spec:
             - sh
             - -c
             - |
+              # Copy users.xml from ConfigMap
               cp /config/users.xml /users.d/users.xml
-              printf '<clickhouse><users><default><password>%s</password></default></users></clickhouse>\n' "$CLICKHOUSE_PASSWORD" > /users.d/default-password.xml
-          env:
-            - name: CLICKHOUSE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: clickhouse-secret
-                  key: password
+              # Write default-password.xml with no_password (simplest auth)
+              echo '<clickhouse><users><default><no_password /></default></users></clickhouse>' > /users.d/default-password.xml
           volumeMounts:
             - name: clickhouse-config
               mountPath: /config
@@ -64,16 +60,8 @@ spec:
           env:
             - name: CLICKHOUSE_DB
               value: "default"
-            - name: CLICKHOUSE_USER
-              valueFrom:
-                secretKeyRef:
-                  name: clickhouse-secret
-                  key: username
-            - name: CLICKHOUSE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: clickhouse-secret
-                  key: password
+            # Removed CLICKHOUSE_USER and CLICKHOUSE_PASSWORD to prevent entrypoint from creating users with password
+            # User config is handled via users.d/users.xml and users.d/default-password.xml (no_password)
             - name: CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT
               value: "1"
   # Empty list: prod uses emptyDir (above), not PVCs. If cluster already had PVCs, delete StatefulSet first: kubectl delete sts clickhouse -n shortlink

@@ -10,7 +10,7 @@ ARGOCD_NS="${ARGOCD_NS:-argocd}"
 
 if [[ -z "${GIT_REPO_URL:-}" ]]; then
   echo "Error: GIT_REPO_URL is not set."
-  echo "Example: export GIT_REPO_URL=https://github.com/your-org/Shortlink-GitOps.git"
+  echo "Example: export GIT_REPO_URL=https://github.com/Rurutia1027/Shortlink-GitOps.git"
   echo "Then run: $0"
   exit 1
 fi
