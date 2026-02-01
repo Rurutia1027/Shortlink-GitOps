@@ -81,7 +81,7 @@ data:
       <format_schema_path>/var/lib/clickhouse/format_schemas/</format_schema_path>
     </clickhouse>
   
-  # users.d/users.xml - simple auth: default user, no password (merge with main users)
+  # Minimal user config: default user with no password (profiles/quotas are in config.xml)
   users.xml: |
     <?xml version="1.0"?>
     <clickhouse>
@@ -89,47 +89,16 @@ data:
         <default>
           <no_password />
           <networks><ip>::/0</ip></networks>
-          <profile>default</profile>
-          <quota>default</quota>
-          <access_management>1</access_management>
         </default>
       </users>
-      
-      <profiles>
-        <default>
-          <max_memory_usage>10000000000</max_memory_usage>
-          <max_execution_time>300</max_execution_time>
-          <timeout_before_checking_execution_speed>10</timeout_before_checking_execution_speed>
-          <readonly>0</readonly>
-        </default>
-        
-        <readonly>
-          <readonly>1</readonly>
-        </readonly>
-      </profiles>
-      
-      <quotas>
-        <default>
-          <interval>
-            <duration>3600</duration>
-            <queries>0</queries>
-            <errors>0</errors>
-            <result_rows>0</result_rows>
-            <read_rows>0</read_rows>
-            <execution_time>0</execution_time>
-          </interval>
-        </default>
-      </quotas>
     </clickhouse>
 
-  # Override image default password so entrypoint and clients can use user 'default' with no password
+  # Override any default password from image entrypoint
   default-password.xml: |
     <?xml version="1.0"?>
     <clickhouse>
       <users>
-        <default>
-          <no_password />
-        </default>
+        <default><no_password /></default>
       </users>
     </clickhouse>
 
