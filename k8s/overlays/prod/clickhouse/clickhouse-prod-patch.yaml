@@ -1,7 +1,5 @@
-# Prod overlay for small/local cluster (1 master + 2 nodes).
-# Uses emptyDir instead of PVCs so no StorageClass or PV provisioning is required.
-# Data and logs are ephemeral (lost on pod restart); suitable for local/dev.
-# Init container writes users.xml and default-password.xml with no_password (simplest auth).
+# Prod overlay: uses emptyDir instead of PVCs (ephemeral storage, suitable for local/dev).
+# User config is directly mounted from ConfigMap (no initContainer needed).
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -15,29 +13,10 @@ spec:
         - name: clickhouse-config
           configMap:
             name: clickhouse-config
-        - name: clickhouse-users-d
-          emptyDir: {}
         - name: clickhouse-data
           emptyDir: {}
         - name: clickhouse-logs
           emptyDir: {}
-      initContainers:
-        - name: clickhouse-users-d-init
-          image: busybox:1.36
-          command:
-            - sh
-            - -c
-            - |
-              # Copy users.xml from ConfigMap
-              cp /config/users.xml /users.d/users.xml
-              # Write default-password.xml with no_password (simplest auth)
-              echo '<clickhouse><users><default><no_password /></default></users></clickhouse>' > /users.d/default-password.xml
-          volumeMounts:
-            - name: clickhouse-config
-              mountPath: /config
-              readOnly: true
-            - name: clickhouse-users-d
-              mountPath: /users.d
       containers:
         - name: clickhouse-server
           volumeMounts:
@@ -46,8 +25,12 @@ spec:
             - name: clickhouse-config
               mountPath: /etc/clickhouse-server/config.d/config.xml
               subPath: config.xml
-            - name: clickhouse-users-d
-              mountPath: /etc/clickhouse-server/users.d
+            - name: clickhouse-config
+              mountPath: /etc/clickhouse-server/users.d/users.xml
+              subPath: users.xml
+            - name: clickhouse-config
+              mountPath: /etc/clickhouse-server/users.d/default-password.xml
+              subPath: default-password.xml
             - name: clickhouse-logs
               mountPath: /var/log/clickhouse-server
           resources:
@@ -60,8 +43,6 @@ spec:
           env:
             - name: CLICKHOUSE_DB
               value: "default"
-            # Removed CLICKHOUSE_USER and CLICKHOUSE_PASSWORD to prevent entrypoint from creating users with password
-            # User config is handled via users.d/users.xml and users.d/default-password.xml (no_password)
             - name: CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT
               value: "1"
   # Empty list: prod uses emptyDir (above), not PVCs. If cluster already had PVCs, delete StatefulSet first: kubectl delete sts clickhouse -n shortlink
