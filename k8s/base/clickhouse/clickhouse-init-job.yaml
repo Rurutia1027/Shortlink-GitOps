@@ -33,6 +33,8 @@ spec:
               clickhouse-client --host "$HOST" --port "$PORT" --multiquery < /scripts/01_create_db.sql
               echo "Running 02_tables_mvs.sql..."
               clickhouse-client --host "$HOST" --port "$PORT" --database shortlink_stats --multiquery < /scripts/02_tables_mvs.sql
+              echo "Running 03_kafka_sync.sql (CK Kafka engine -> link_stats_events)..."
+              clickhouse-client --host "$HOST" --port "$PORT" --database shortlink_stats --multiquery < /scripts/03_kafka_sync.sql
               echo "ClickHouse init done."
           env:
             - name: CLICKHOUSE_HOST
