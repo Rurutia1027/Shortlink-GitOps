@@ -34,17 +34,6 @@ data:
       <user_files_path>/var/lib/clickhouse/user_files/</user_files_path>
       <format_schema_path>/var/lib/clickhouse/format_schemas/</format_schema_path>
       
-      <users>
-        <default>
-          <password></password>
-          <networks>
-            <ip>::/0</ip>
-          </networks>
-          <profile>default</profile>
-          <quota>default</quota>
-        </default>
-      </users>
-      
       <profiles>
         <default>
           <max_memory_usage>10000000000</max_memory_usage>
@@ -92,33 +81,18 @@ data:
       <format_schema_path>/var/lib/clickhouse/format_schemas/</format_schema_path>
     </clickhouse>
   
+  # users.d/users.xml - simple auth: default user, no password (merge with main users)
   users.xml: |
     <?xml version="1.0"?>
     <clickhouse>
       <users>
         <default>
-          <password></password>
-          <networks>
-            <ip>::/0</ip>
-          </networks>
+          <no_password />
+          <networks><ip>::/0</ip></networks>
           <profile>default</profile>
           <quota>default</quota>
           <access_management>1</access_management>
         </default>
-        
-        <!-- Production user example (should be configured via secrets in prod) -->
-        <clickhouse_user>
-          <password></password>
-          <networks>
-            <ip>::/0</ip>
-          </networks>
-          <profile>default</profile>
-          <quota>default</quota>
-          <databases>
-            <database>default</database>
-            <database>shortlink_stats</database>
-          </databases>
-        </clickhouse_user>
       </users>
       
       <profiles>
@@ -146,6 +120,17 @@ data:
           </interval>
         </default>
       </quotas>
+    </clickhouse>
+
+  # Override image default password so entrypoint and clients can use user 'default' with no password
+  default-password.xml: |
+    <?xml version="1.0"?>
+    <clickhouse>
+      <users>
+        <default>
+          <no_password />
+        </default>
+      </users>
     </clickhouse>
 
 ---
@@ -194,6 +179,9 @@ spec:
             - name: clickhouse-config
               mountPath: /etc/clickhouse-server/users.d/users.xml
               subPath: users.xml
+            - name: clickhouse-config
+              mountPath: /etc/clickhouse-server/users.d/default-password.xml
+              subPath: default-password.xml
             - name: clickhouse-logs
               mountPath: /var/log/clickhouse-server
           resources:
