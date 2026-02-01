@@ -33,9 +33,9 @@ So: infra and apps are applied in Sync; only when that is healthy do we run Post
 | Job | Purpose | Order in PostSync |
 |-----|---------|-------------------|
 | `flyway-admin` | Admin DB migrations | sync-wave `"0"` (first) |
-| `flyway-shortlink` | Shortlink DB migrations | sync-wave `"1"` (after admin) |
-| `kafka-create-stats-topic` | Create `shortlink-stats-events` topic | (no wave; runs with other PostSync) |
-| `clickhouse-init` | Create `shortlink_stats` DB and tables/MVs | sync-wave `"2"` (after CK deploy in Sync) |
+| `flyway-shortlink` | Shortlink DB migrations | sync-wave `"1"` |
+| `kafka-create-stats-topic` | Create `shortlink-stats-events` topic | sync-wave `"1"` (must complete before CK init) |
+| `clickhouse-init` | Create `shortlink_stats` DB, tables/MVs, and CK Kafka engine | sync-wave `"2"` (after Kafka topic exists) |
 
 Annotations used:
 
@@ -66,9 +66,10 @@ So: **yes, modifying these Jobs in the repo that backs `k8s/overlays/prod` will 
 
 ClickHouse has no Flyway-equivalent in-app; we mirror the pattern with **ConfigMap + PostSync Job**:
 
-1. **ConfigMap `clickhouse-init-ddl`** holds two SQL scripts:
+1. **ConfigMap `clickhouse-init-ddl`** holds three SQL scripts:
    - `01_create_db.sql`: `CREATE DATABASE IF NOT EXISTS shortlink_stats;`
-   - `02_tables_mvs.sql`: all `CREATE TABLE` / `CREATE MATERIALIZED VIEW` for `shortlink_stats` (idempotent with `IF NOT EXISTS`).
+   - `02_tables_mvs.sql`: all `CREATE TABLE` / `CREATE MATERIALIZED VIEW` for `shortlink_stats` (link_stats_events, link_stats_daily, dimension MVs).
+   - `03_kafka_sync.sql`: CK Kafka engine table + MV to sync `shortlink-stats-events` topic into `link_stats_events`.
 2. **PostSync Job `clickhouse-init`** (sync-wave `"2"`): after ClickHouse StatefulSet is in Sync, the Job waits until CK is reachable, then runs 01 then 02 (with `--database shortlink_stats` for 02). One Job does both “create DB” and “create tables”; no separate init vs migrate Jobs unless you want stricter separation later.
 
 DDL lives in Git (ConfigMap); changes to scripts or Job trigger re-sync and re-run. Same idea as Flyway: infra/schema as code, executed after the service is deployed.
