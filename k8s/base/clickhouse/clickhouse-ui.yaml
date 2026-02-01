@@ -1,0 +1,76 @@
+---
+# Tabix - ClickHouse Web UI
+# Lightweight web client for ClickHouse with SQL editor, query history, and table browser
+# Alternative: ClickHouse also has built-in Play UI at http://clickhouse:8123/play
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clickhouse-ui
+  namespace: shortlink
+  labels:
+    app: clickhouse-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clickhouse-ui
+  template:
+    metadata:
+      labels:
+        app: clickhouse-ui
+    spec:
+      containers:
+        - name: tabix
+          image: spoonest/clickhouse-tabix-web-client:stable
+          ports:
+            - containerPort: 80
+              name: http
+          env:
+            # Default ClickHouse connection (can be changed in UI)
+            - name: CH_HOST
+              value: "clickhouse.shortlink.svc.cluster.local"
+            - name: CH_PORT
+              value: "8123"
+            - name: CH_USER
+              value: "default"
+            - name: CH_PASSWORD
+              value: ""
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+
+---
+# ClickHouse UI Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse-ui
+  namespace: shortlink
+  labels:
+    app: clickhouse-ui
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: 80
+      name: http
+  selector:
+    app: clickhouse-ui
