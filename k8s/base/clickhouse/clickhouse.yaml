@@ -81,14 +81,14 @@ data:
       <format_schema_path>/var/lib/clickhouse/format_schemas/</format_schema_path>
     </clickhouse>
   
-  # Minimal user config: default user with no password (profiles/quotas are in config.xml)
+  # Minimal user config: default user with password (profiles/quotas are in config.xml)
   # Only ONE file defines user authentication to avoid merge conflicts
   users.xml: |
     <?xml version="1.0"?>
     <clickhouse>
       <users>
         <default>
-          <no_password />
+          <password>default</password>
           <networks><ip>::/0</ip></networks>
         </default>
       </users>

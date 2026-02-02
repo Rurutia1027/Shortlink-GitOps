@@ -25,22 +25,32 @@ spec:
               set -e
               HOST="${CLICKHOUSE_HOST:-clickhouse.shortlink.svc.cluster.local}"
               PORT="${CLICKHOUSE_PORT:-9000}"
-              until clickhouse-client --host "$HOST" --port "$PORT" -q "SELECT 1"; do
-                echo "Waiting for ClickHouse at $HOST:$PORT..."
+              USER="${CLICKHOUSE_USER:-default}"
+              PASSWORD="${CLICKHOUSE_PASSWORD:-default}"
+              # Build client command with explicit password (don't rely on config files)
+              # Note: --password must be followed by the password value directly
+              CLIENT_CMD="clickhouse-client --host $HOST --port $PORT --user $USER --password $PASSWORD"
+              until $CLIENT_CMD -q "SELECT 1" 2>&1; do
+                echo "Waiting for ClickHouse at $HOST:$PORT (user=$USER)..."
                 sleep 3
               done
+              echo "Connected to ClickHouse successfully."
               echo "Running 01_create_db.sql..."
-              clickhouse-client --host "$HOST" --port "$PORT" --multiquery < /scripts/01_create_db.sql
+              $CLIENT_CMD --multiquery < /scripts/01_create_db.sql
               echo "Running 02_tables_mvs.sql..."
-              clickhouse-client --host "$HOST" --port "$PORT" --database shortlink_stats --multiquery < /scripts/02_tables_mvs.sql
+              $CLIENT_CMD --database shortlink_stats --multiquery < /scripts/02_tables_mvs.sql
               echo "Running 03_kafka_sync.sql (CK Kafka engine -> link_stats_events)..."
-              clickhouse-client --host "$HOST" --port "$PORT" --database shortlink_stats --multiquery < /scripts/03_kafka_sync.sql
+              $CLIENT_CMD --database shortlink_stats --multiquery < /scripts/03_kafka_sync.sql
               echo "ClickHouse init done."
           env:
             - name: CLICKHOUSE_HOST
               value: clickhouse.shortlink.svc.cluster.local
             - name: CLICKHOUSE_PORT
               value: "9000"
+            - name: CLICKHOUSE_USER
+              value: "default"
+            - name: CLICKHOUSE_PASSWORD
+              value: "default"
           volumeMounts:
             - name: ddl
               mountPath: /scripts
