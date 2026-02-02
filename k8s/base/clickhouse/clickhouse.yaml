@@ -82,6 +82,7 @@ data:
     </clickhouse>
   
   # Minimal user config: default user with no password (profiles/quotas are in config.xml)
+  # Only ONE file defines user authentication to avoid merge conflicts
   users.xml: |
     <?xml version="1.0"?>
     <clickhouse>
@@ -90,15 +91,6 @@ data:
           <no_password />
           <networks><ip>::/0</ip></networks>
         </default>
-      </users>
-    </clickhouse>
-
-  # Override any default password from image entrypoint
-  default-password.xml: |
-    <?xml version="1.0"?>
-    <clickhouse>
-      <users>
-        <default><no_password /></default>
       </users>
     </clickhouse>
 
@@ -148,9 +140,6 @@ spec:
             - name: clickhouse-config
               mountPath: /etc/clickhouse-server/users.d/users.xml
               subPath: users.xml
-            - name: clickhouse-config
-              mountPath: /etc/clickhouse-server/users.d/default-password.xml
-              subPath: default-password.xml
             - name: clickhouse-logs
               mountPath: /var/log/clickhouse-server
           resources:
