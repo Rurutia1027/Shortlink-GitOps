@@ -1,0 +1,24 @@
+---
+# Debug Pod: Access ClickHouse logs from a separate pod
+# Usage: kubectl apply -f clickhouse-log-viewer.yaml
+# Then: kubectl exec -it clickhouse-log-viewer -n shortlink -- sh
+# Inside pod: tail -f /logs/clickhouse-server.err.log
+apiVersion: v1
+kind: Pod
+metadata:
+  name: clickhouse-log-viewer
+  namespace: shortlink
+spec:
+  containers:
+    - name: log-viewer
+      image: busybox:1.36
+      command: ["sh", "-c", "tail -f /logs/clickhouse-server.err.log || sleep 3600"]
+      volumeMounts:
+        - name: clickhouse-logs
+          mountPath: /logs
+          readOnly: true
+  volumes:
+    - name: clickhouse-logs
+      persistentVolumeClaim:
+        claimName: clickhouse-logs-clickhouse-0
+  restartPolicy: Never
