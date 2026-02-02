@@ -23,14 +23,4 @@ spec:
         - protocol: TCP
           port: 9000  # Native
 
----
-# Secret for ClickHouse: user=default, password=default. TODO: Move to Vault when ready.
-apiVersion: v1
-kind: Secret
-metadata:
-  name: clickhouse-secret
-  namespace: shortlink
-type: Opaque
-stringData:
-  username: "default"
-  password: "default"
+# Secret removed: password is now configured directly in users.xml (ConfigMap)
